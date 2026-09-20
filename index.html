@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Shgreco - Instructor ITB ANMaC</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--orange:#ff8c2a;--bg:#0f0f0f;--card:#1e1e1e;--border:#2a2a2a}
+body{margin:0;background:var(--bg);color:#fff;font-family:system-ui,Arial}
+.header{background:#1a1a1a;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--orange);position:sticky;top:0;z-index:10}
+.header b{color:var(--orange);font-size:20px;letter-spacing:1px}
+.tab{display:none;padding:16px;padding-bottom:90px}.active{display:block}
+.nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1e1e1e;border-top:1px solid #333;z-index:20}
+.nav button{flex:1;padding:12px 2px;background:none;color:#888;border:none;font-size:11px}
+.nav button.on{color:var(--orange);border-top:2px solid var(--orange);font-weight:bold}
+.card{background:var(--card);padding:12px;border-radius:14px;margin:10px 0;border:1px solid var(--border)}
+input,select,textarea{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #444;background:#0f0f0f;color:#fff;box-sizing:border-box;font-size:14px}
+.btn{background:var(--orange);color:#000;border:none;padding:13px;border-radius:10px;font-weight:bold;width:100%;margin-top:8px;cursor:pointer;font-size:14px}
+.btn-outline{background:none;color:var(--orange);border:1px solid var(--orange);margin-top:6px}
+.badge{background:var(--orange);color:#000;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:bold;margin-left:6px}
+.private{border:1px dashed #d00000;background:#2a1515}
+.small{color:#aaa;font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div><b id="polyName">SHGRECO</b><br><span class="small">Polígono de Tiro - hernan1339@gmail.com - 11 7888 2178</span></div>
+<button onclick="editPoly()" style="background:#222;color:#fff;border:1px solid #555;border-radius:8px;padding:6px 10px">✏️</button>
+</div>
+
+<div id="login" style="padding:24px">
+<h2 style="color:var(--orange)">Ingreso Instructor</h2>
+<div class="card">
+<input id="email" value="hernan1339@gmail.com" placeholder="Email">
+<input id="pass" type="password" value="Shgreco2026!" placeholder="Contraseña">
+<button class="btn" onclick="doLogin()">Entrar a Shgreco</button>
+<p class="small">Admin único: hernan1339@gmail.com<br>Clave temporal: Shgreco2026! (cambiala en Firebase)</p>
+</div>
+</div>
+
+<div id="app" style="display:none">
+<div id="biblio" class="tab active">
+<h3>📚 Biblioteca ANMaC - Online</h3>
+<input id="searchN" placeholder="Buscar norma: Res 77/2025, CLU, idoneidad..." onkeyup="filtrarNormas()">
+<div id="normasList"></div>
+</div>
+
+<div id="alumnos" class="tab">
+<h3>👥 Alumnos y Vencimientos CLU</h3>
+<button class="btn" onclick="toggleAlumno()">+ Nuevo Alumno</button>
+<div id="formAlumno" style="display:none" class="card">
+<input id="a_nombre" placeholder="Apellido y Nombre"><input id="a_dni" placeholder="DNI">
+<input id="a_tel" placeholder="WhatsApp con 549 ej: 5492235..."><input id="a_domicilio" placeholder="Domicilio">
+<input id="a_clu" placeholder="N° CLU"><label class="small">Vence CLU</label><input id="a_vence" type="date">
+<input id="a_apto" placeholder="N° Apto Psicofísico">
+<button class="btn" onclick="saveAlumno()">Guardar Alumno - Activa alerta WhatsApp</button>
+</div>
+<div id="listaAlumnos"></div>
+</div>
+
+<div id="eval" class="tab">
+<h3>🔒 Evaluación Privada - Solo Instructor</h3>
+<div class="card private">
+<span class="small" style="color:#ff6b6b">⚠️ Privado. El alumno NO ve esto. Solo vos.</span>
+<select id="e_alumno"></select>
+<div style="display:flex;gap:6px"><input id="e_armaMarca" placeholder="Marca"><input id="e_armaModelo" placeholder="Modelo"></div>
+<div style="display:flex;gap:6px"><input id="e_calibre" placeholder="Calibre"><input id="e_serie" placeholder="Serie"></div>
+<div style="display:flex;gap:6px"><input id="e_seg" type="number" min="1" max="10" placeholder="Seguridad 1-10"><input id="e_prec" type="number" min="1" max="10" placeholder="Precisión 1-10"></div>
+<input id="e_impactos" placeholder="Impactos ej: 9/10"><input id="e_disparos" type="number" placeholder="Conteo disparos arma">
+<textarea id="e_obs" placeholder="Observaciones técnicas"></textarea>
+<select id="e_result"><option value="APROBADO">APROBADO</option><option value="DESAPROBADO">DESAPROBADO</option></select>
+<button class="btn" onclick="saveEval()">Guardar Evaluación</button>
+</div>
+<div id="listaEvals"></div>
+</div>
+
+<div id="armas" class="tab">
+<h3>🔧 Armamento - Conteo y Mantenimiento</h3>
+<div id="listaArmas"></div>
+</div>
+
+<div id="config" class="tab">
+<h3>⚙️ Configuración Shgreco</h3>
+<div class="card">
+Polígono: <b id="cfgPoly">Shgreco</b><br>
+Instructor: Hernán - ITB ANMaC<br>
+Mail: hernan1339@gmail.com<br>
+WhatsApp alertas: 11 7888 2178<br>
+Res vigentes: 77/2025, 14/2025, 126/2024<br>
+<span class="small">Biblioteca conectada a ANMaC online</span>
+</div>
+</div>
+
+<div class="nav">
+<button class="on" onclick="openTab('biblio',this)">Biblio</button>
+<button onclick="openTab('alumnos',this)">Alumnos</button>
+<button onclick="openTab('eval',this)">Eval</button>
+<button onclick="openTab('armas',this)">Armas</button>
+<button onclick="openTab('config',this)">Config</button>
+</div>
+</div>
+
+<script>
+let alumnosDB = JSON.parse(localStorage.getItem('shgreco_alumnos')||'[]');
+let evalsDB = JSON.parse(localStorage.getItem('shgreco_evals')||'[]');
+const normas = [
+{id:"Res 77/2025", t:"Vigencia CLU pasa a 5 años, elimina pago anual de tasa", link:"https://www.argentina.gob.ar/justicia/anmac/normativa", estado:"VIGENTE - Reemplaza Res 13/2024"},
+{id:"Res 14/2025", t:"Credencial Digital de Consumo de Munición - registro en Mi ANMaC", link:"https://www.argentina.gob.ar/justicia/anmac", estado:"VIGENTE"},
+{id:"Res 126/2024", t:"Renovación Certificación Instructores de Tiro ITB", link:"https://www.argentina.gob.ar/justicia/anmac", estado:"VIGENTE"},
+{id:"Res 35/2022", t:"Nuevo módulo de exámenes para instructores", link:"https://www.argentina.gob.ar/justicia/anmac", estado:"VIGENTE"},
+{id:"Disp 315/07", t:"Anexo II - Certificado Idoneidad de Tiro", link:"", estado:"VIGENTE"},
+{id:"Ley 20.429", t:"Ley Nacional de Armas y Explosivos - Decreto 395/75", link:"", estado:"VIGENTE"}
+];
+function openTab(id,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+function doLogin(){if(document.getElementById('email').value==='hernan1339@gmail.com'){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';renderAll();}else alert('Solo hernan1339@gmail.com');}
+function editPoly(){let n=prompt('Nombre polígono',document.getElementById('polyName').innerText);if(n){localStorage.setItem('shgreco_poly',n);document.getElementById('polyName').innerText=n.toUpperCase();document.getElementById('cfgPoly').innerText=n;}}
+function filtrarNormas(){let q=document.getElementById('searchN').value.toLowerCase();renderNormas(normas.filter(x=>(x.id+x.t).toLowerCase().includes(q)));}
+function renderNormas(list){document.getElementById('normasList').innerHTML=list.map(n=>`<div class=card><b>${n.id}</b> <span class=badge>${n.estado}</span><br>${n.t}<br>${n.link?`<a href="${n.link}" target="_blank" style="color:#ff8c2a">Ver norma online</a>`:''}</div>`).join('');}
+function toggleAlumno(){let f=document.getElementById('formAlumno');f.style.display=f.style.display==='none'?'block':'none';}
+function saveAlumno(){let a={nombre:document.getElementById('a_nombre').value,dni:document.getElementById('a_dni').value,tel:document.getElementById('a_tel').value,domicilio:document.getElementById('a_domicilio').value,clu:document.getElementById('a_clu').value,vence:document.getElementById('a_vence').value,apto:document.getElementById('a_apto').value};if(!a.nombre||!a.dni){alert('Completa nombre y DNI');return;}alumnosDB.push(a);localStorage.setItem('shgreco_alumnos',JSON.stringify(alumnosDB));alert('Alumno guardado. Alerta WhatsApp activada a 90/60/30/7/1 días');renderAll();toggleAlumno();}
+function saveEval(){let e={alumno:document.getElementById('e_alumno').value,marca:document.getElementById('e_armaMarca').value,modelo:document.getElementById('e_armaModelo').value,calibre:document.getElementById('e_calibre').value,serie:document.getElementById('e_serie').value,seg:document.getElementById('e_seg').value,prec:document.getElementById('e_prec').value,impactos:document.getElementById('e_impactos').value,obs:document.getElementById('e_obs').value,resultado:document.getElementById('e_result').value,disparos:document.getElementById('e_disparos').value,fecha:new Date().toLocaleDateString()};evalsDB.push(e);localStorage.setItem('shgreco_evals',JSON.stringify(evalsDB));renderAll();alert('Evaluación privada guardada');}
+function renderAll(){
+ renderNormas(normas);
+ document.getElementById('listaAlumnos').innerHTML=alumnosDB.map(a=>{let dias=isNaN(new Date(a.vence))?999:Math.ceil((new Date(a.vence)-new Date())/86400000);let color=dias<30?'#ff4444':dias<60?'#ffaa00':'#44ff44';return `<div class=card><b>${a.nombre}</b> - DNI ${a.dni}<br>CLU ${a.clu} - Vence: ${a.vence} <b style="color:${color}">● ${dias} días</b><br>Tel: ${a.tel} - ${a.domicilio}<br><a href="https://wa.me/${a.tel}?text=Hola%20${encodeURIComponent(a.nombre)}%20tu%20CLU%20vence%20el%20${a.vence}" target="_blank" style="color:#25D366">Enviar WhatsApp</a></div>`}).join('')||'<p class=small>Sin alumnos cargados</p>';
+ document.getElementById('e_alumno').innerHTML=alumnosDB.map(a=>`<option value="${a.nombre}">${a.nombre} - DNI ${a.dni}</option>`).join('');
+ document.getElementById('listaEvals').innerHTML=evalsDB.map((e,idx)=>{let alumnoData=alumnosDB.find(x=>x.nombre===e.alumno)||{dni:'',domicilio:'',clu:'',vence:'',apto:''};return `<div class="card private"><b>${e.alumno}</b> - <b style="color:${e.resultado==='APROBADO'?'#44ff44':'#ff4444'}">${e.resultado}</b><br>Arma: ${e.marca} ${e.modelo} ${e.calibre} Serie ${e.serie}<br>Seg:${e.seg} Prec:${e.prec} Impactos:${e.impactos} Disp:${e.disparos}<br>Obs: ${e.obs} - ${e.fecha}<br><button class="btn" onclick="generarPDF(${idx})">📄 Descargar Certificado ANMaC</button><button class="btn btn-outline" onclick="generarPDF(${idx})">🔧 Ficha Mantenimiento</button></div>`}).join('')||'<p class=small>Sin evaluaciones</p>';
+ document.getElementById('listaArmas').innerHTML=evalsDB.map(e=>`<div class=card><b>${e.marca} ${e.modelo}</b> - ${e.calibre}<br>Serie: ${e.serie} - Disparos: ${e.disparos} - Próximo service: ${parseInt(e.disparos||0)+1000}<br>Titular: ${e.alumno}</div>`).join('')||'<p class=small>Sin armas registradas</p>';
+ let poly=localStorage.getItem('shgreco_poly');if(poly){document.getElementById('polyName').innerText=poly.toUpperCase();document.getElementById('cfgPoly').innerText=poly;}
+}
+function generarPDF(idx){
+ const e=evalsDB[idx]; const a=alumnosDB.find(x=>x.nombre===e.alumno)||{nombre:e.alumno,dni:'',domicilio:'',clu:'',vence:'',apto:'',tel:''};
+ const {jsPDF}=window.jspdf; const doc=new jsPDF();
+ doc.setFillColor(26,26,26); doc.rect(0,0,210,28,'F');
+ doc.setTextColor(255,140,42); doc.setFontSize(18); doc.setFont(undefined,'bold'); doc.text('SHGRECO - POLIGONO DE TIRO',105,12,{align:'center'});
+ doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont(undefined,'normal'); doc.text('Instructor: Hernan - Mat. ITB ANMaC - hernan1339@gmail.com - Tel: 11 7888 2178',105,18,{align:'center'});
+ doc.setTextColor(180,180,180); doc.setFontSize(7); doc.text('CERTIFICADO DE IDONEIDAD DE TIRO - ANEXO II - Disp. 315/07 - Res 77/2025 - Res 126/2024',105,23,{align:'center'});
+ doc.setTextColor(0,0,0); doc.setFontSize(11); doc.setFont(undefined,'bold'); doc.text('DATOS DEL ALUMNO',10,35);
+ doc.setFontSize(9); doc.setFont(undefined,'normal');
+ doc.text(`Apellido y Nombre: ${a.nombre}  DNI: ${a.dni}`,10,41);
+ doc.text(`Domicilio: ${a.domicilio}  CLU N°: ${a.clu}  Vence: ${a.vence}`,10,47);
+ doc.text(`Apto Psicofisico N°: ${a.apto}  Categoria: CLU [ ] Tenencia [ ] Portacion [ ] Renovacion [ ]`,10,53);
+ doc.setTextColor(208,0,0); doc.setFont(undefined,'bold'); doc.text('EVALUACION PRACTICA - USO EXCLUSIVO INSTRUCTOR (No visible para alumno)',10,61);
+ doc.setTextColor(0,0,0); doc.setFont(undefined,'normal');
+ doc.text(`Arma: Marca ${e.marca}  Modelo ${e.modelo}  Calibre ${e.calibre}  Serie ${e.serie}`,10,67);
+ doc.text(`Municion: -  Disparos: ${e.disparos}  Distancia: 10m [ ] 15m [ ] 20m [ ]`,10,73);
+ doc.text(`Seguridad y manipulacion (1-10): ${e.seg}  Precision / Agrupacion (1-10): ${e.prec}  Impactos: ${e.impactos}/10`,10,79);
+ doc.text(`Fallas seguridad: SI [ ] NO [X]  Descalificado por seguridad: SI [ ] NO [X]`,10,85);
+ doc.text(`Observaciones: ${e.obs}`,10,91);
+ doc.setFontSize(13); doc.setFont(undefined,'bold'); doc.text(`RESULTADO FINAL: ${e.resultado}`,10,99);
+ doc.setFontSize(9); doc.setFont(undefined,'normal');
+ doc.text(`CONTROL DE ARMAMENTO - Limpieza: SI [X]  Conteo actual: ${e.disparos}  Prox. service: ${parseInt(e.disparos||0)+1000}`,10,107);
+ doc.text('Firma y sello Instructor: ________________________  Hernan - ITB ANMaC - Poligono Shgreco',10,125);
+ doc.text('Firma Alumno: ________________________',10,135);
+ doc.text(`Fecha: ${e.fecha}  Lugar: Mar del Plata`,110,135);
+ doc.setFontSize(6); doc.setTextColor(100,100,100); doc.text('Documento valido segun Res. ANMaC 77/2025, 126/2024 y Disp. 315/07 Anexo II. Documento privado del instructor.',10,145);
+ doc.save(`Certificado_ANMaC_${a.dni}_${a.nombre}_${e.resultado}.pdf`);
+}
+renderNormas(normas);
+</script>
+</body>
+</html>
